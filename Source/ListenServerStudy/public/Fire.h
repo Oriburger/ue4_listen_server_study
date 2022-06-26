@@ -38,9 +38,13 @@ public:
 	UFUNCTION()
 		void InitSteamDynamicMaterial();
 
-	//불이 꺼지고 수증기가 소멸하는 효과를 위해 Opacity값을 Update한다
-	UFUNCTION()
-		void UpdateSteamDynamicMaterial();
+	//불이 꺼지고 수증기가 소멸하는 효과를 위해 Opacity값을 Update (멀티캐스트)
+	UFUNCTION(NetMulticast, reliable)
+		void MulticastUpdateSteamOpacity();
+
+	//불이 꺼지고 수증기가 소멸하는 효과를 위해 Opacity값을 Update (서버에서 실행
+	UFUNCTION(Server, reliable)
+		void ServerRPCUpdateSteamOpacity(); 
 
 	//FireHose의 NS_Emiiter가 Apply하는 데미지를 받는다. FireScaleSize를 DamageAmount 만큼 줄임
 	UFUNCTION()

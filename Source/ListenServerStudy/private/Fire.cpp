@@ -73,11 +73,16 @@ void AFire::InitSteamDynamicMaterial()
 	SteamEmitter->SetMaterial(0, SteamDynamicMaterial);	
 }
 
-void AFire::UpdateSteamDynamicMaterial()
+void AFire::MulticastUpdateSteamOpacity_Implementation()
 {
 	if (SteamOpacityValue < 0.0f) return; //SteamOpacity가 유효하지 않은 값이라면?
 	SteamOpacityValue -= 0.1f; //새로운 Opacity값으로 대체
 	SteamDynamicMaterial->SetScalarParameterValue("Opacity", FMath::FInterpTo(SteamOpacityValue+0.1f, SteamOpacityValue, 0.05f, 0.5f));  
+}
+
+void AFire::ServerRPCUpdateSteamOpacity_Implementation()
+{
+	MulticastUpdateSteamOpacity(); 
 }
 
 float AFire::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -100,7 +105,10 @@ void AFire::SetSteamDisappearTimer()
 
 	FTimerHandle DestroyTimerHandle; //DestroyTimer 핸들
 	float SteamLifeSpan = 10.0f; //연기의 Life (특정 시간만큼 Opacity 업데이트)
-	GetWorldTimerManager().SetTimer(DestroyTimerHandle, this, &AFire::UpdateSteamDynamicMaterial, 0.5f, true, 0.0f); //타이머 설정
+	if(HasAuthority())
+		GetWorldTimerManager().SetTimer(DestroyTimerHandle, this, &AFire::MulticastUpdateSteamOpacity, 0.5f, true, 0.0f); //타이머 설정
+	else
+		GetWorldTimerManager().SetTimer(DestroyTimerHandle, this, &AFire::ServerRPCUpdateSteamOpacity, 0.5f, true, 0.0f); //타이머 설정
 }
 
 inline void AFire::TryDestroy()
